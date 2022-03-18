@@ -29,6 +29,11 @@
 
     </RadioGroup>
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@android:color/darker_gray"/>
+
     <EditText
         android:id="@+id/encryptedText"
         android:layout_width="match_parent"
@@ -64,6 +69,11 @@
         android:ems="10"
         android:inputType="textPersonName"
         android:text="Decrypted" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:background="@android:color/darker_gray"/>
 
     <Spinner
         android:id="@+id/schemeSpinner"
