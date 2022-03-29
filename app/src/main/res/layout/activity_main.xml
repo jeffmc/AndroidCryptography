@@ -35,24 +35,17 @@
         android:background="@android:color/darker_gray"/>
 
     <EditText
-        android:id="@+id/encryptedText"
+        android:id="@+id/decryptedText"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:ems="10"
         android:inputType="textPersonName"
-        android:text="Encrypted" />
+        android:text="Decrypted" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:orientation="horizontal">
-
-        <Button
-            android:id="@+id/actionButton"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_weight="9"
-            android:text="Action" />
 
         <ImageView
             android:id="@+id/directionIcon"
@@ -63,12 +56,12 @@
     </LinearLayout>
 
     <EditText
-        android:id="@+id/decryptedText"
+        android:id="@+id/encryptedText"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:ems="10"
         android:inputType="textPersonName"
-        android:text="Decrypted" />
+        android:text="Encrypted" />
 
     <View
         android:layout_width="match_parent"
