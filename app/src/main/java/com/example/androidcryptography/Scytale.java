@@ -1,30 +1,27 @@
 package com.example.androidcryptography;
 
 import java.util.Arrays;
+import java.util.Locale;
 
 public class Scytale extends EncryptionScheme {
 
-    public int rows = 3; // TODO: Make adjustable in UI
+    public static final int UI_MAX_ROWS = 10;
+
+    public int rows = 4; // TODO: Make adjustable in UI
 
     @Override
     public String schemeName() { return "Scytale"; }
     @Override
     public String encrypt(String raw) {
-        raw = raw.trim(); // trim all whitespace at start and end
+        raw = raw.replaceAll("\\s", "").toUpperCase(); // remove all spaces, taken from https://www.geeksforgeeks.org/how-to-remove-all-white-spaces-from-a-string-in-java/
         char[] arr = raw.toCharArray(); // convert to char array
         if (arr.length == 0) return ""; // return empty
 
-        int cols = ( raw.length() / rows ) + 1; // find col
+        int cols = (int) Math.ceil((double)raw.length() / (double)rows); // find col
         char[][] grid = new char[cols][rows]; // create grid
-        for (int i=0;i<grid.length;i++) { Arrays.fill(grid[i], '@'); } // fill with @
+        for (char[] a : grid) { Arrays.fill(a, '@'); } // fill with @
         for (int i=0;i<arr.length;i++) { // populate with my text
             grid[i%cols][i/cols] = arr[i];
-        }
-        for (int y=0;y<rows;y++) {
-            for (int x=0;x<cols;x++) {
-                System.out.print(grid[x][y]);
-            }
-            System.out.println();
         }
         char[] enc = new char[rows*cols]; // read downwards
         for (int i=0;i<enc.length;i++) {
@@ -34,6 +31,20 @@ public class Scytale extends EncryptionScheme {
     }
     @Override
     public String decrypt(String coded) {
-        return ""; // TODO: Add decryption
+        coded = coded.trim(); // trim all whitespace at ends
+        char[] arr = coded.toCharArray();
+        if (arr.length == 0) return ""; // return empty
+
+        int cols = (int) Math.ceil((double)coded.length() / (double)rows);
+        char[][] grid = new char[cols][rows];
+        for (char[] a : grid) { Arrays.fill(a, ' '); } // fill with @
+        for (int i=0;i<arr.length;i++) { // populate with my text
+            grid[i/rows][i%rows] = arr[i];
+        }
+        char[] dec = new char[rows*cols]; // read downwards
+        for (int i=0;i<dec.length;i++) {
+            dec[i] = grid[i%cols][i/cols]; // place back into 1 dimensional array
+        }
+        return new String(dec).replaceAll("[\\s@]", ""); // return trimmed decoded, remove @
     }
 }

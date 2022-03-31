@@ -12,6 +12,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -20,16 +21,16 @@ import org.w3c.dom.Text;
 import java.util.Arrays;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, SeekBar.OnSeekBarChangeListener {
 
     static EncryptionScheme PLAINTEXT_SCHEME = new Plaintext(),
             SCYTALE_SCHEME = new Scytale(),
             CAESAR_SCHEME = new Caesar(),
             VIGENERE_SCHEME = new Vigenere();
 
-    static EncryptionScheme[] SCHEMES = new EncryptionScheme[]{
-            PLAINTEXT_SCHEME,
+    static EncryptionScheme[] SCHEMES = new EncryptionScheme[]{ // first is default
             SCYTALE_SCHEME,
+            PLAINTEXT_SCHEME,
             CAESAR_SCHEME,
             VIGENERE_SCHEME,
     };
@@ -40,6 +41,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ImageView directionIcon;
 
     Spinner schemeSpinner;
+
+    SeekBar numInput;
+    EditText keyInput;
 
     boolean direction;
 
@@ -59,19 +63,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         direction = encryptBtn.isChecked();
         decryptBtn = this.findViewById(R.id.modeDecryptBtn);
 
+        encryptBtn.setOnClickListener(this);
+        decryptBtn.setOnClickListener(this);
+
         encryptedText = this.findViewById(R.id.encryptedText);
         decryptedText = this.findViewById(R.id.decryptedText);
         setupTextWatchers();
 
 //        actionBtn = this.findViewById(R.id.actionButton);
         directionIcon = this.findViewById(R.id.directionIcon);
+        directionIcon.setOnClickListener(this);
 
         schemeSpinner = this.findViewById(R.id.schemeSpinner);
         setupSchemeSpinner();
         schemeSpinner.setOnItemSelectedListener(this);
 
-        encryptBtn.setOnClickListener(this);
-        decryptBtn.setOnClickListener(this);
+        numInput = this.findViewById(R.id.intInput);
+        keyInput = this.findViewById(R.id.keyString);
+        numInput.setOnSeekBarChangeListener(this);
     }
 
     private void setupSchemeSpinner() {
@@ -130,10 +139,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    public void updateScheme() { // Updates algorithm inputs for specified scheme and updates text as well.
+        EncryptionScheme newScheme = getScheme();
+        Toast.makeText(getApplicationContext(), newScheme.schemeName(), Toast.LENGTH_SHORT).show();
+        if (newScheme instanceof Plaintext) {
+            keyInput.setEnabled(false);
+            keyInput.setText("");
+            numInput.setEnabled(false);
+            numInput.setMax(1);
+        } else if (newScheme instanceof Scytale) {
+            Scytale scy = (Scytale) newScheme;
+            numInput.setMax(Scytale.UI_MAX_ROWS - 1);
+            numInput.setProgress(scy.rows);
+            numInput.setEnabled(true);
+            keyInput.setEnabled(false);
+            keyInput.setText("");
+        } // TODO: DO all schemes
+        updateText();
+    }
+
+    // Direction Listener
     @Override
     public void onClick(View view) {
         if (view.equals(encryptBtn) || view.equals(decryptBtn)) {
             setDirection(view.equals(encryptBtn));
+        }
+        if (view.equals(directionIcon)) {
+            setDirection(!direction); // Flip direction on arrow click
         }
     }
 
@@ -141,8 +173,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         if (adapterView.equals(schemeSpinner)) {
-            Toast.makeText(getApplicationContext(), getScheme().schemeName(), Toast.LENGTH_SHORT).show();
-            updateText();
+            updateScheme();
         }
     }
     @Override
@@ -152,4 +183,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
+    // Integer inputs
+    @Override
+    public void onProgressChanged(SeekBar seekBar, int newValue, boolean fromUser) {
+        if (!fromUser) return; // If not user origin, return.
+        EncryptionScheme sch = getScheme();
+        if (sch instanceof Scytale) {
+            Scytale scy = (Scytale) sch;
+            scy.rows = newValue + 1;
+        } // TODO: Implement for all schemes, and text input too.
+        updateText(); // Update text to reflect change
+    }
+    @Override
+    public void onStartTrackingTouch(SeekBar seekBar) { }
+    @Override
+    public void onStopTrackingTouch(SeekBar seekBar) { }
 }

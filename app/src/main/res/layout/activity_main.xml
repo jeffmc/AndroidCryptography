@@ -7,6 +7,14 @@
     android:orientation="vertical"
     tools:context=".MainActivity">
 
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:text="Direction:"
+        android:textSize="20sp" />
+
     <RadioGroup
         android:id="@+id/modeGroup"
         android:layout_width="match_parent"
@@ -29,18 +37,25 @@
 
     </RadioGroup>
 
-    <View
+    <TextView
+        android:id="@+id/textView2"
         android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:background="@android:color/darker_gray"/>
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:text="Data:"
+        android:textSize="20sp" />
 
-    <EditText
-        android:id="@+id/decryptedText"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Decrypted" />
+        android:layout_height="100dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/decryptedText"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="Decrypted"
+            android:text="Plaintext Message" />
+    </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -55,23 +70,54 @@
             app:srcCompat="@drawable/ic_baseline_arrow_upward_24" />
     </LinearLayout>
 
-    <EditText
-        android:id="@+id/encryptedText"
+    <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:ems="10"
-        android:inputType="textPersonName"
-        android:text="Encrypted" />
+        android:layout_height="100dp">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/encryptedText"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:hint="Encrypted"
+            android:text="Scrambled Data" />
+    </com.google.android.material.textfield.TextInputLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="3dp"
         android:background="@android:color/darker_gray"/>
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:text="Scheme Parameters:"
+        android:textSize="20sp" />
+
     <Spinner
         android:id="@+id/schemeSpinner"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:spinnerMode="dialog" />
+
+    <SeekBar
+        android:id="@+id/intInput"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:max="25"
+        android:progress="0" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/keyString"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Key"
+            android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
 
 </LinearLayout>
