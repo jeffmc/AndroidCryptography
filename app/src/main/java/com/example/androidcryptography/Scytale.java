@@ -1,13 +1,12 @@
 package com.example.androidcryptography;
 
 import java.util.Arrays;
-import java.util.Locale;
 
 public class Scytale extends EncryptionScheme {
 
     public static final int UI_MAX_ROWS = 10;
 
-    public int rows = 4; // TODO: Make adjustable in UI
+    public int rows = 4;
 
     @Override
     public String schemeName() { return "Scytale"; }

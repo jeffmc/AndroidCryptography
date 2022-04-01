@@ -29,8 +29,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             VIGENERE_SCHEME = new Vigenere();
 
     static EncryptionScheme[] SCHEMES = new EncryptionScheme[]{ // first is default
-            SCYTALE_SCHEME,
             PLAINTEXT_SCHEME,
+            SCYTALE_SCHEME,
             CAESAR_SCHEME,
             VIGENERE_SCHEME,
     };
@@ -79,8 +79,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         schemeSpinner.setOnItemSelectedListener(this);
 
         numInput = this.findViewById(R.id.intInput);
-        keyInput = this.findViewById(R.id.keyString);
         numInput.setOnSeekBarChangeListener(this);
+        keyInput = this.findViewById(R.id.keyString);
+        setupKeyWatcher();
     }
 
     private void setupSchemeSpinner() {
@@ -106,6 +107,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
             @Override public void afterTextChanged(Editable editable) {
                 if (direction) updateText(); // Only update in response to user triggered events
+            }
+        });
+    }
+    private void setupKeyWatcher() {
+        keyInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
+            @Override public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
+            @Override public void afterTextChanged(Editable editable) {
+                EncryptionScheme sch = getScheme();
+                if (sch instanceof Vigenere) {
+                    Vigenere vig = (Vigenere) sch;
+                    vig.key = editable.toString();
+                    updateText();
+                }
             }
         });
     }
@@ -143,10 +158,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         EncryptionScheme newScheme = getScheme();
         Toast.makeText(getApplicationContext(), newScheme.schemeName(), Toast.LENGTH_SHORT).show();
         if (newScheme instanceof Plaintext) {
-            keyInput.setEnabled(false);
-            keyInput.setText("");
             numInput.setEnabled(false);
             numInput.setMax(1);
+            numInput.setProgress(0);
+            keyInput.setEnabled(false);
+            keyInput.setText("");
         } else if (newScheme instanceof Scytale) {
             Scytale scy = (Scytale) newScheme;
             numInput.setMax(Scytale.UI_MAX_ROWS - 1);
@@ -154,7 +170,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             numInput.setEnabled(true);
             keyInput.setEnabled(false);
             keyInput.setText("");
-        } // TODO: DO all schemes
+        } else if (newScheme instanceof Caesar) {
+            Caesar cae = (Caesar) newScheme;
+            numInput.setMax(Caesar.UI_MAX_SHIFT);
+            numInput.setProgress(cae.shift);
+            numInput.setEnabled(true);
+            keyInput.setEnabled(false);
+            keyInput.setText("");
+        } else if (newScheme instanceof Vigenere) {
+            Vigenere vig = (Vigenere) newScheme;
+            numInput.setEnabled(false);
+            numInput.setMax(1);
+            keyInput.setEnabled(true);
+            keyInput.setText(vig.key);
+        }
         updateText();
     }
 
@@ -191,7 +220,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (sch instanceof Scytale) {
             Scytale scy = (Scytale) sch;
             scy.rows = newValue + 1;
-        } // TODO: Implement for all schemes, and text input too.
+        } else if (sch instanceof Caesar) { // TODO: Implement for all schemes, and text input too.
+            Caesar cae = (Caesar) sch;
+            cae.shift = newValue;
+        }
         updateText(); // Update text to reflect change
     }
     @Override

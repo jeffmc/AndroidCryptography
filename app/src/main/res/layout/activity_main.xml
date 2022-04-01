@@ -91,7 +91,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif"
-        android:text="Scheme Parameters:"
+        android:text="Scheme Selection:"
         android:textSize="20sp" />
 
     <Spinner
@@ -99,6 +99,14 @@
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:spinnerMode="dialog" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif"
+        android:text="Scheme Parameters:"
+        android:textSize="20sp" />
 
     <SeekBar
         android:id="@+id/intInput"
