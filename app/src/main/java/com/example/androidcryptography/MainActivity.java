@@ -1,7 +1,9 @@
 package com.example.androidcryptography;
 
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -21,15 +23,18 @@ import org.w3c.dom.Text;
 import java.util.Arrays;
 import java.util.List;
 
+@RequiresApi(api = Build.VERSION_CODES.O)
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, SeekBar.OnSeekBarChangeListener {
 
     static EncryptionScheme PLAINTEXT_SCHEME = new Plaintext(),
             SCYTALE_SCHEME = new Scytale(),
             CAESAR_SCHEME = new Caesar(),
-            VIGENERE_SCHEME = new Vigenere();
+            VIGENERE_SCHEME = new Vigenere(),
+            NSAES_SCHEME = new NSAES();
 
     static EncryptionScheme[] SCHEMES = new EncryptionScheme[]{ // first is default
             PLAINTEXT_SCHEME,
+            NSAES_SCHEME,
             SCYTALE_SCHEME,
             CAESAR_SCHEME,
             VIGENERE_SCHEME,
