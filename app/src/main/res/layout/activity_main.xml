@@ -54,7 +54,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:hint="Decrypted"
-            android:text="Plaintext Message" />
+            android:text="ThisIsBigProblem" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
@@ -82,11 +82,6 @@
             android:text="Scrambled Data" />
     </com.google.android.material.textfield.TextInputLayout>
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="3dp"
-        android:background="@android:color/darker_gray"/>
-
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -101,22 +96,49 @@
         android:spinnerMode="dialog" />
 
     <TextView
-        android:id="@+id/textView"
+        android:id="@+id/parametersLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:fontFamily="sans-serif"
         android:text="Scheme Parameters:"
         android:textSize="20sp" />
 
-    <SeekBar
-        android:id="@+id/intInput"
-        style="@style/Widget.AppCompat.SeekBar.Discrete"
+    <LinearLayout
+        android:id="@+id/numInputParent"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:max="25"
-        android:progress="0" />
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/numInputLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Shift:"
+            android:textAlignment="center"
+            android:textSize="24sp" />
+
+        <SeekBar
+            android:id="@+id/intInput"
+            style="@style/Widget.AppCompat.SeekBar.Discrete"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="20"
+            android:max="25"
+            android:progress="0" />
+
+        <TextView
+            android:id="@+id/numValueLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="25"
+            android:textAlignment="center"
+            android:textSize="24sp" />
+    </LinearLayout>
 
     <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/keyInputParent"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 

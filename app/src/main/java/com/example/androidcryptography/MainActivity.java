@@ -16,6 +16,7 @@ import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import org.w3c.dom.Text;
@@ -23,19 +24,18 @@ import org.w3c.dom.Text;
 import java.util.Arrays;
 import java.util.List;
 
-@RequiresApi(api = Build.VERSION_CODES.O)
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, SeekBar.OnSeekBarChangeListener {
 
     static EncryptionScheme PLAINTEXT_SCHEME = new Plaintext(),
             SCYTALE_SCHEME = new Scytale(),
             CAESAR_SCHEME = new Caesar(),
-            VIGENERE_SCHEME = new Vigenere(),
-            NSAES_SCHEME = new NSAES();
+//            NSAES_SCHEME = new NSAES(),
+            VIGENERE_SCHEME = new Vigenere();
 
     static EncryptionScheme[] SCHEMES = new EncryptionScheme[]{ // first is default
-            PLAINTEXT_SCHEME,
-            NSAES_SCHEME,
             SCYTALE_SCHEME,
+            PLAINTEXT_SCHEME,
+//            NSAES_SCHEME,
             CAESAR_SCHEME,
             VIGENERE_SCHEME,
     };
@@ -48,7 +48,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Spinner schemeSpinner;
 
     SeekBar numInput;
+    View numInputParent;
+    TextView numLabel, numValueLabel;
     EditText keyInput;
+    View keyInputParent;
+    TextView paramLabel;
 
     boolean direction;
 
@@ -83,9 +87,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setupSchemeSpinner();
         schemeSpinner.setOnItemSelectedListener(this);
 
+        paramLabel = this.findViewById(R.id.parametersLabel);
         numInput = this.findViewById(R.id.intInput);
         numInput.setOnSeekBarChangeListener(this);
+        numValueLabel = this.findViewById(R.id.numValueLabel);
+        numLabel = this.findViewById(R.id.numInputLabel);
+        numInputParent = this.findViewById(R.id.numInputParent);
         keyInput = this.findViewById(R.id.keyString);
+        keyInputParent = this.findViewById(R.id.keyInputParent);
         setupKeyWatcher();
     }
 
@@ -163,33 +172,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         EncryptionScheme newScheme = getScheme();
         Toast.makeText(getApplicationContext(), newScheme.schemeName(), Toast.LENGTH_SHORT).show();
         if (newScheme instanceof Plaintext) {
-            numInput.setEnabled(false);
-            numInput.setMax(1);
-            numInput.setProgress(0);
-            keyInput.setEnabled(false);
-            keyInput.setText("");
+            updateParametersLayout(false,1,0,"",false,"");
         } else if (newScheme instanceof Scytale) {
             Scytale scy = (Scytale) newScheme;
-            numInput.setMax(Scytale.UI_MAX_ROWS - 1);
-            numInput.setProgress(scy.rows);
-            numInput.setEnabled(true);
-            keyInput.setEnabled(false);
-            keyInput.setText("");
+            updateParametersLayout(true,Scytale.UI_MAX_ROWS - 1, scy.rows, "Rows:", false, "");
         } else if (newScheme instanceof Caesar) {
             Caesar cae = (Caesar) newScheme;
-            numInput.setMax(Caesar.UI_MAX_SHIFT);
-            numInput.setProgress(cae.shift);
-            numInput.setEnabled(true);
-            keyInput.setEnabled(false);
-            keyInput.setText("");
+            updateParametersLayout(true,Caesar.UI_MAX_SHIFT,cae.shift, "Shift:",false,"");
         } else if (newScheme instanceof Vigenere) {
             Vigenere vig = (Vigenere) newScheme;
-            numInput.setEnabled(false);
-            numInput.setMax(1);
-            keyInput.setEnabled(true);
-            keyInput.setText(vig.key);
+            updateParametersLayout(false,1,0, "",true,vig.key);
         }
         updateText();
+    }
+
+    private void updateParametersLayout(boolean numEnabled, int numMax, int numVal,String numStr, boolean textEnabled, String txt) {
+        numInput.setMax(numMax);
+        numInput.setProgress(numVal);
+        numInput.setEnabled(numEnabled);
+        numLabel.setText(numStr);
+        numInputParent.setVisibility(numEnabled ? View.VISIBLE : View.INVISIBLE);
+        keyInput.setText(txt);
+        keyInput.setEnabled(textEnabled);
+        keyInputParent.setVisibility(textEnabled ? View.VISIBLE : View.INVISIBLE);
+        paramLabel.setVisibility(numEnabled||textEnabled ? View.VISIBLE : View.INVISIBLE);
     }
 
     // Direction Listener
@@ -225,9 +231,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (sch instanceof Scytale) {
             Scytale scy = (Scytale) sch;
             scy.rows = newValue + 1;
+            numValueLabel.setText(Integer.toString(scy.rows));
         } else if (sch instanceof Caesar) { // TODO: Implement for all schemes, and text input too.
             Caesar cae = (Caesar) sch;
             cae.shift = newValue;
+            numValueLabel.setText(Integer.toString(cae.shift));
         }
         updateText(); // Update text to reflect change
     }

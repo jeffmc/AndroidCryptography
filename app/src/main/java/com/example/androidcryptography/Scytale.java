@@ -6,7 +6,7 @@ public class Scytale extends EncryptionScheme {
 
     public static final int UI_MAX_ROWS = 10;
 
-    public int rows = 4;
+    public int rows = 5;
 
     @Override
     public String schemeName() { return "Scytale"; }
@@ -16,15 +16,35 @@ public class Scytale extends EncryptionScheme {
         char[] arr = raw.toCharArray(); // convert to char array
         if (arr.length == 0) return ""; // return empty
 
-        int cols = (int) Math.ceil((double)raw.length() / (double)rows); // find col
+        int area = ceilToMultiple(arr.length, rows);
+        int cols = area/rows; // find col
+        int rem = area - arr.length; // remainder
+        int pdgbgn = rows - rem;
+        System.out.println(area + ", " + rem + ", " + pdgbgn);
+        if (pdgbgn < 0) throw new IllegalArgumentException("ERROR!");
         char[][] grid = new char[cols][rows]; // create grid
         for (char[] a : grid) { Arrays.fill(a, '@'); } // fill with @
+        int x=0, y=0;
         for (int i=0;i<arr.length;i++) { // populate with my text
-            grid[i%cols][i/cols] = arr[i];
+            grid[x][y] = arr[i];
+            x++;
+            if (x >= (y>=pdgbgn ? cols-1 : cols)) {
+                y++;
+                x = 0;
+            }
+            if (y >= rows) break;
         }
-        char[] enc = new char[rows*cols]; // read downwards
+        char[] enc = new char[arr.length]; // read downwards
+        x = 0;
+        y = 0;
         for (int i=0;i<enc.length;i++) {
-            enc[i] = grid[i/rows][i%rows];
+            enc[i] = grid[x][y];
+            y++;
+            if (y >= rows) {
+                y = 0;
+                x++;
+            }
+//            if (x >= cols) break;
         }
         return new String(enc); // return
     }
@@ -45,5 +65,10 @@ public class Scytale extends EncryptionScheme {
             dec[i] = grid[i%cols][i/cols]; // place back into 1 dimensional array
         }
         return new String(dec).replaceAll("[\\s@]", ""); // return trimmed decoded, remove @
+    }
+
+    private int ceilToMultiple(int a, int f) {
+        int m = a % f;
+        return m == 0 ? a : (a + f - m);
     }
 }
