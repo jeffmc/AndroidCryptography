@@ -1,5 +1,7 @@
 package com.example.androidcryptography;
 
+// Caesar shift implementation, shifts all letters by some defined number in the alphabet
+
 public class Caesar extends EncryptionScheme {
 
     public static final int UI_MAX_SHIFT = 26;

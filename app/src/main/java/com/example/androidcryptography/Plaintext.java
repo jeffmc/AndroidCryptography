@@ -1,5 +1,7 @@
 package com.example.androidcryptography;
 
+// Plaintext implementation, no encryption.
+
 public class Plaintext extends EncryptionScheme {
     @Override
     public String schemeName() { return "Plaintext"; }

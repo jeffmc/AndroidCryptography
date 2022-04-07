@@ -2,6 +2,9 @@ package com.example.androidcryptography;
 
 import java.util.Arrays;
 
+// Implementation of Scytale, loads all characters in to a grid reading left-right then top-bottom, reads them back
+// top-bottom, left-right as an encryption. Process is reversed for decryption
+
 public class Scytale extends EncryptionScheme {
 
     public static final int UI_MAX_ROWS = 10;

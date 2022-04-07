@@ -3,6 +3,10 @@ package com.example.androidcryptography;
 import android.text.Editable;
 import android.text.TextWatcher;
 
+// Vigenere scheme implementation, similar to caesar
+// but with a changing shift depending upon key,
+// key repeats if plaintext is greater length.
+
 public class Vigenere extends EncryptionScheme {
 
     public String key = "java";

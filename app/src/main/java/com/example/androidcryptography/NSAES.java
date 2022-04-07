@@ -1,19 +1,11 @@
 package com.example.androidcryptography;
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Base64;
-import java.util.Base64.Decoder;
-import java.util.Base64.Encoder;
 import java.util.Random;
 
-@RequiresApi(api = Build.VERSION_CODES.O)
 // NSAES (Not-So-Advanced Encryption Standard) derived from AES https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
 public class NSAES extends EncryptionScheme {
 
@@ -26,8 +18,7 @@ public class NSAES extends EncryptionScheme {
 
     public Charset charset = StandardCharsets.UTF_8;
 
-    private Encoder b64encoder = Base64.getUrlEncoder().withoutPadding();
-    private Decoder b64decoder = Base64.getUrlDecoder();
+    private static JeffBase64 jb64 = new JeffBase64();
 
     public static byte[] randomKey(long seed) {
         Random r = new Random(seed);
@@ -52,7 +43,7 @@ public class NSAES extends EncryptionScheme {
             encryptBlock(arr);
             codedBuffer.put(arr);
         }
-        return b64encoder.encodeToString(codedBuffer.array());
+        return jb64.encode(codedBuffer.array());
     }
 
     private void encryptBlock(byte[] blk) {
@@ -69,7 +60,7 @@ public class NSAES extends EncryptionScheme {
 
     @Override
     public String decrypt(String coded) {
-        ByteBuffer cipherBuffer = ByteBuffer.wrap(b64decoder.decode(coded));
+        ByteBuffer cipherBuffer = ByteBuffer.wrap(jb64.decode(coded));
         if (cipherBuffer.capacity()%BLOCK_AREA!=0)
             throw new IllegalArgumentException("Incomplete cipherBuffer length=" + cipherBuffer.capacity());
 

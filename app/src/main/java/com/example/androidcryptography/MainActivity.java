@@ -24,15 +24,23 @@ import org.w3c.dom.Text;
 import java.util.Arrays;
 import java.util.List;
 
+// Jeff McMillan 4/7/22
+// MainActivity contains all UI logic and user-triggered event handling for the application.
+// All encryption activities are dispatched to respective EncryptionScheme subclasses.
+// This app allows you to change direction between encryption/decryption (with radio buttions or press of icon)
+// It also utilizes a spinner UI element to select which scheme you would like to employ
+// There is a section of the UI to specify scheme parameters that will
+// dynamically change according to the scheme's needs.
+
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, AdapterView.OnItemSelectedListener, SeekBar.OnSeekBarChangeListener {
 
-    static EncryptionScheme PLAINTEXT_SCHEME = new Plaintext(),
+    private static EncryptionScheme PLAINTEXT_SCHEME = new Plaintext(), // Scheme constants
             SCYTALE_SCHEME = new Scytale(),
             CAESAR_SCHEME = new Caesar(),
 //            NSAES_SCHEME = new NSAES(),
             VIGENERE_SCHEME = new Vigenere();
 
-    static EncryptionScheme[] SCHEMES = new EncryptionScheme[]{ // first is default
+    private static EncryptionScheme[] SCHEMES = new EncryptionScheme[]{ // first is default
             SCYTALE_SCHEME,
             PLAINTEXT_SCHEME,
 //            NSAES_SCHEME,
@@ -40,53 +48,66 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             VIGENERE_SCHEME,
     };
 
+    // radio buttons for selecting mode
     RadioButton encryptBtn, decryptBtn;
     RadioGroup modeBtnGroup;
+    // text elements
     EditText encryptedText, decryptedText;
+    // shows direction of encryption, can be pressed to flip
     ImageView directionIcon;
 
+    // select scheme
     Spinner schemeSpinner;
 
-    SeekBar numInput;
+    // scheme parameters
+    // integer
     View numInputParent;
+    SeekBar numInput;
     TextView numLabel, numValueLabel;
+    // string
     EditText keyInput;
     View keyInputParent;
     TextView paramLabel;
 
+    // direction of encryption (true=encryption, false=decryption)
     boolean direction;
 
+    // Icon resource pointers
     final int UPWARD_ICON = R.drawable.ic_baseline_arrow_upward_24, DOWNWARD_ICON = R.drawable.ic_baseline_arrow_downward_24;
 
+    // Entry point
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        findUI();
-        setDirection(true);
+        findUI(); // Setup UI elements
+        setDirection(true); // Direction will be encryption and scheme will be 0th index in SCHEMES array
     }
 
-    private void findUI() {
+    private void findUI() { // Find views and setup listeners
+        // radio btns
         modeBtnGroup = this.findViewById(R.id.modeGroup);
         encryptBtn = this.findViewById(R.id.modeEncryptBtn);
-        direction = encryptBtn.isChecked();
         decryptBtn = this.findViewById(R.id.modeDecryptBtn);
-
         encryptBtn.setOnClickListener(this);
         decryptBtn.setOnClickListener(this);
+        direction = encryptBtn.isChecked();
 
+        // plaintext ciphertext
         encryptedText = this.findViewById(R.id.encryptedText);
         decryptedText = this.findViewById(R.id.decryptedText);
         setupTextWatchers();
 
-//        actionBtn = this.findViewById(R.id.actionButton);
+        // direction icon
         directionIcon = this.findViewById(R.id.directionIcon);
         directionIcon.setOnClickListener(this);
 
+        // scheme selection
         schemeSpinner = this.findViewById(R.id.schemeSpinner);
         setupSchemeSpinner();
         schemeSpinner.setOnItemSelectedListener(this);
 
+        // parameters
         paramLabel = this.findViewById(R.id.parametersLabel);
         numInput = this.findViewById(R.id.intInput);
         numInput.setOnSeekBarChangeListener(this);
@@ -98,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setupKeyWatcher();
     }
 
-    private void setupSchemeSpinner() {
+    private void setupSchemeSpinner() { // setup the data to fill spinner w/ SCHEMES array
         List<EncryptionScheme> schemes = Arrays.asList(SCHEMES);
 
         ArrayAdapter<? extends EncryptionScheme> adapter = new ArrayAdapter<>(
@@ -108,7 +129,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         schemeSpinner.setAdapter(adapter);
     }
 
-    private void setupTextWatchers() {
+    private void setupTextWatchers() { // Setup textwatchers to only update in correct direction, prevent infinite event loopback
         encryptedText.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
             @Override public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
@@ -124,7 +145,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
     }
-    private void setupKeyWatcher() {
+    private void setupKeyWatcher() { // Textwatcher for key in parameters to actively update cipher/plaintext
         keyInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
             @Override public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
@@ -139,11 +160,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
     }
 
-    public EncryptionScheme getScheme() {
+    public EncryptionScheme getScheme() { // Returns the currently selected scheme
         return ((EncryptionScheme) schemeSpinner.getSelectedItem());
     }
 
-    // Set direction of the process.
+    // Set direction of the process, change UI appearance to reflect mode and update text.
     public void setDirection(boolean encryption) {
         direction = encryption;
         encryptBtn.setChecked(encryption);
@@ -154,7 +175,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         updateText();
     }
 
-    public void updateText() {
+    public void updateText() { // Update cipher or plain depending upon direction
         if (direction) {
             String encrypted = getScheme().encrypt(decryptedText.getText().toString());
 //            if (!encryptedText.getText().toString().equals(encrypted)) { // To not trigger looping textchanged events
@@ -175,10 +196,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             updateParametersLayout(false,1,0,"",false,"");
         } else if (newScheme instanceof Scytale) {
             Scytale scy = (Scytale) newScheme;
+            setIntLabel(scy.rows);
             updateParametersLayout(true,Scytale.UI_MAX_ROWS - 1, scy.rows, "Rows:", false, "");
         } else if (newScheme instanceof Caesar) {
             Caesar cae = (Caesar) newScheme;
-            updateParametersLayout(true,Caesar.UI_MAX_SHIFT,cae.shift, "Shift:",false,"");
+            setIntLabel(cae.shift);
+            updateParametersLayout(true, Caesar.UI_MAX_SHIFT, cae.shift, "Shift:",false,"");
         } else if (newScheme instanceof Vigenere) {
             Vigenere vig = (Vigenere) newScheme;
             updateParametersLayout(false,1,0, "",true,vig.key);
@@ -186,6 +209,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         updateText();
     }
 
+    // Update all UI elements with provided arguments, and modify visibility depending on activity
     private void updateParametersLayout(boolean numEnabled, int numMax, int numVal,String numStr, boolean textEnabled, String txt) {
         numInput.setMax(numMax);
         numInput.setProgress(numVal);
@@ -196,6 +220,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         keyInput.setEnabled(textEnabled);
         keyInputParent.setVisibility(textEnabled ? View.VISIBLE : View.INVISIBLE);
         paramLabel.setVisibility(numEnabled||textEnabled ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    // String to int conversion for setting int value label.
+    private void setIntLabel(int val) {
+        numValueLabel.setText(Integer.toString(val));
     }
 
     // Direction Listener
@@ -209,7 +238,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    // Spinner Listener
+    // Spinner Listener for Scheme Selection
     @Override
     public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
         if (adapterView.equals(schemeSpinner)) {
@@ -217,28 +246,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
     @Override
-    public void onNothingSelected(AdapterView<?> adapterView) {
+    public void onNothingSelected(AdapterView<?> adapterView) { // SHOULD NEVER HAPPEN!
         if (adapterView.equals(schemeSpinner)) {
             Toast.makeText(getApplicationContext(), "No Encryption", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // Integer inputs
+    // Seekbar Listener for Integer input
     @Override
     public void onProgressChanged(SeekBar seekBar, int newValue, boolean fromUser) {
-        if (!fromUser) return; // If not user origin, return.
-        EncryptionScheme sch = getScheme();
-        if (sch instanceof Scytale) {
-            Scytale scy = (Scytale) sch;
-            scy.rows = newValue + 1;
-            numValueLabel.setText(Integer.toString(scy.rows));
-        } else if (sch instanceof Caesar) { // TODO: Implement for all schemes, and text input too.
-            Caesar cae = (Caesar) sch;
-            cae.shift = newValue;
-            numValueLabel.setText(Integer.toString(cae.shift));
+        if (seekBar == numInput) {
+            if (!fromUser) return; // If not user origin, return.
+            EncryptionScheme sch = getScheme();
+            if (sch instanceof Scytale) {
+                Scytale scy = (Scytale) sch;
+                scy.rows = newValue + 1;
+                setIntLabel(scy.rows);
+            } else if (sch instanceof Caesar) { // TODO: Implement for all schemes, and text input too.
+                Caesar cae = (Caesar) sch;
+                cae.shift = newValue;
+                setIntLabel(cae.shift);
+            }
+            updateText(); // Update text to reflect change
         }
-        updateText(); // Update text to reflect change
     }
+    // Unused
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) { }
     @Override
