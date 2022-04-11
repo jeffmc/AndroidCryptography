@@ -1,5 +1,6 @@
 package com.example.androidcryptography;
 
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -7,37 +8,60 @@ import java.util.Arrays;
 import java.util.Random;
 
 // NSAES (Not-So-Advanced Encryption Standard) derived from AES https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
+// Still decently advanced, I just took a few shortcuts to make my implementation simpler;
+// No mixing columns, no finite field affine transformations in substitute bytes step either,
+// also key generation is nothing like round-key schedule in the real scheme.
 public class NSAES extends EncryptionScheme {
 
-    public String strKey = "defaultSecureKey"; // Limited to B64URL characters
-    private byte[] key; // Actively derived from strKey in UI impl
+    private long keySeed = 1234567890;
+    private byte[] key; // Actively derived from keySeed in UI impl
 
-    public static final int ROUNDS = 4;
-    public static final int BLOCK_SIZE = 4;
-    public static final int BLOCK_AREA = BLOCK_SIZE*BLOCK_SIZE;
+    public static final int MIN_BLOCK_SIZE = 2;
+    public static final int MAX_BLOCK_SIZE = 8;
+    private int rounds = 4, blockSize = 4, blockArea = blockSize * blockSize;
 
-    public Charset charset = StandardCharsets.UTF_8;
+    public Charset charset = StandardCharsets.US_ASCII;
+    private JeffBase64 jb64 = new JeffBase64();
 
-    private static JeffBase64 jb64 = new JeffBase64();
+    private void generateKeyFromSeed() {
+        Random r = new Random(keySeed);
+        byte[] newKey = new byte[rounds * blockArea];
+        r.nextBytes(newKey);
+        this.key = newKey;
+    }
 
-    public static byte[] randomKey(long seed) {
-        Random r = new Random(seed);
-        byte[] key = new byte[ROUNDS*BLOCK_AREA];
-        r.nextBytes(key);
-        return key;
+    public NSAES() {
+        generateKeyFromSeed();
+    }
+
+    public int blockSize() { return blockSize; }
+    public void blockSize(int size) {
+        blockSize = size;
+        blockArea = size*size;
+        generateKeyFromSeed();
+    }
+    public int getBlockArea() { return blockArea; }
+
+    public int rounds() { return rounds; }
+    public void rounds(int newRounds) { rounds = newRounds; }
+
+    public long seed() { return keySeed; }
+    public void seed(long seed) {
+        keySeed = seed;
+        generateKeyFromSeed();
     }
 
     @Override
-    public String schemeName() { return "AES"; }
+    public String schemeName() { return "NSAES"; }
 
     @Override
     public String encrypt(String raw) {
-        ByteBuffer rawBuffer = ByteBuffer.allocate(raw.length() + BLOCK_AREA - raw.length() % BLOCK_AREA); // round up by block area
+        ByteBuffer rawBuffer = ByteBuffer.allocate(raw.length() + blockArea - raw.length() % blockArea); // round up by block area
         rawBuffer.put(raw.getBytes(charset));
         rawBuffer.position(0);
 
         ByteBuffer codedBuffer = ByteBuffer.allocate(rawBuffer.capacity());
-        byte[] arr = new byte[BLOCK_AREA];
+        byte[] arr = new byte[blockArea];
         while (rawBuffer.hasRemaining()) {
             rawBuffer.get(arr);
             encryptBlock(arr);
@@ -47,10 +71,10 @@ public class NSAES extends EncryptionScheme {
     }
 
     private void encryptBlock(byte[] blk) {
-        if (key.length!=ROUNDS*BLOCK_AREA) throw new IllegalStateException("Invalid Key!");
-        for (int r=0;r<ROUNDS;r++) {
-            int start = r*BLOCK_AREA;
-            byte[] subkey = Arrays.copyOfRange(key, start, start + BLOCK_AREA);
+        if (key.length != rounds * blockArea) throw new IllegalStateException("Invalid Key!");
+        for (int r = 0; r< rounds; r++) {
+            int start = r* blockArea;
+            byte[] subkey = Arrays.copyOfRange(key, start, start + blockArea);
             subBytes(blk, subkey[0]);
             shiftRows(blk, true);
 //			mixColumns(blk); TODO: Understand this
@@ -60,25 +84,34 @@ public class NSAES extends EncryptionScheme {
 
     @Override
     public String decrypt(String coded) {
-        ByteBuffer cipherBuffer = ByteBuffer.wrap(jb64.decode(coded));
-        if (cipherBuffer.capacity()%BLOCK_AREA!=0)
-            throw new IllegalArgumentException("Incomplete cipherBuffer length=" + cipherBuffer.capacity());
+        ByteBuffer cipherBuffer;
+//        try {
+            cipherBuffer = ByteBuffer.wrap(jb64.decode(coded));
+//        } catch (IllegalArgumentException e) {
+//            return e.getMessage();
+//        }
+//        if (cipherBuffer.capacity() % BLOCK_AREA!=0) // Will throw if an incomplete block contained
+//            throw new IllegalArgumentException("Incomplete cipherBuffer length=" + cipherBuffer.capacity());
 
         ByteBuffer decodedBuffer = ByteBuffer.allocate(cipherBuffer.capacity());
-        byte[] arr = new byte[BLOCK_AREA];
+        byte[] arr = new byte[blockArea];
         while (cipherBuffer.hasRemaining()) {
-            cipherBuffer.get(arr);
+            try {
+                cipherBuffer.get(arr);
+            } catch (BufferUnderflowException e) {
+                break;
+            }
             decryptBlock(arr);
             decodedBuffer.put(arr);
         }
-        return new String(decodedBuffer.array(), charset);
+        return new String(decodedBuffer.array(), charset).trim(); // Without trimming, repeatedly flipping direction would append whitespace each time.
     }
 
     private void decryptBlock(byte[] blk) {
-        if (key.length!=ROUNDS*BLOCK_AREA) throw new IllegalStateException("Invalid Key!");
-        for (int r=ROUNDS-1;r>=0;r--) {
-            int start = r*BLOCK_AREA;
-            byte[] subkey = Arrays.copyOfRange(key, start, start + BLOCK_AREA);
+        if (key.length!= rounds * blockArea) throw new IllegalStateException("Invalid Key!");
+        for (int r = rounds -1; r>=0; r--) {
+            int start = r* blockArea;
+            byte[] subkey = Arrays.copyOfRange(key, start, start + blockArea);
             addKey(blk, subkey);
             shiftRows(blk, false);
             subBytes(blk, (byte) -subkey[0]);
@@ -87,18 +120,18 @@ public class NSAES extends EncryptionScheme {
     }
 
     private void subBytes(byte[] blk, byte shift) { // TODO: Implement real affine transforms and galois field
-        if (blk.length != BLOCK_AREA) throw new IllegalArgumentException("Array length is " + blk.length);
+        if (blk.length != blockArea) throw new IllegalArgumentException("Array length is " + blk.length);
         for (int i=0;i<blk.length;i++) {
             blk[i]+=shift;
         }
     }
 
     private void shiftRows(byte[] blk, boolean direction) { // Offset each row by its y coordinate within square block
-        if (blk.length != BLOCK_AREA) throw new IllegalArgumentException("Array length is " + blk.length);
-        for (int y=1;y<BLOCK_SIZE;y++) {
-            int fi = y*BLOCK_SIZE;
-            byte[] row = Arrays.copyOfRange(blk, fi, fi+BLOCK_SIZE);
-            for (int x=0;x<BLOCK_SIZE;x++) blk[fi+x] = row[(x + (direction?y:BLOCK_SIZE-y)) % BLOCK_SIZE];
+        if (blk.length != blockArea) throw new IllegalArgumentException("Array length is " + blk.length);
+        for (int y = 1; y< blockSize; y++) {
+            int fi = y* blockSize;
+            byte[] row = Arrays.copyOfRange(blk, fi, fi+ blockSize);
+            for (int x = 0; x< blockSize; x++) blk[fi+x] = row[(x + (direction?y: blockSize -y)) % blockSize];
         }
     }
 
@@ -135,7 +168,7 @@ public class NSAES extends EncryptionScheme {
 //	}
 
     private void addKey(byte[] arr, byte[] rndkey) { // XOR with key
-        for (int i=0;i<BLOCK_AREA;i++) arr[i] ^= rndkey[i];
+        for (int i = 0; i< blockArea; i++) arr[i] ^= rndkey[i];
     }
 
 }

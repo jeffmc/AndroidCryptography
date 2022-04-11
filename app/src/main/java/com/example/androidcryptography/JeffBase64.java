@@ -62,7 +62,7 @@ public class JeffBase64 { // Taken from my Github https://github.com/jeffmc/AESi
                 if (idx < 0) throw new IllegalArgumentException("Illegal Character(" + idx + "): " + "'" + cseg[i] + "'");
                 iseg[i] = (byte) idx;
             }
-            if (cseg.length < 2) throw new IllegalArgumentException("Solo sextet not enough for 1st byte");
+            if (cseg.length < 2) break;
 
             b = (byte) (iseg[0] << 2);
             byte d = (byte) ((byte) (iseg[1] >>> 4) & 0b11);

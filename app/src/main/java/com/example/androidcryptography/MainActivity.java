@@ -1,9 +1,7 @@
 package com.example.androidcryptography;
 
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -18,8 +16,6 @@ import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import org.w3c.dom.Text;
 
 import java.util.Arrays;
 import java.util.List;
@@ -37,15 +33,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private static EncryptionScheme PLAINTEXT_SCHEME = new Plaintext(), // Scheme constants
             SCYTALE_SCHEME = new Scytale(),
             CAESAR_SCHEME = new Caesar(),
-//            NSAES_SCHEME = new NSAES(),
+            NSAES_SCHEME = new NSAES(),
+            BASE64URL_SCHEME = new Base64URL(),
             VIGENERE_SCHEME = new Vigenere();
 
     private static EncryptionScheme[] SCHEMES = new EncryptionScheme[]{ // first is default
-            SCYTALE_SCHEME,
             PLAINTEXT_SCHEME,
-//            NSAES_SCHEME,
+            SCYTALE_SCHEME,
             CAESAR_SCHEME,
             VIGENERE_SCHEME,
+            NSAES_SCHEME,
+            BASE64URL_SCHEME,
     };
 
     // radio buttons for selecting mode
@@ -68,6 +66,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     EditText keyInput;
     View keyInputParent;
     TextView paramLabel;
+    // seed
+    TextView seedInput;
+    View seedInputParent;
 
     // direction of encryption (true=encryption, false=decryption)
     boolean direction;
@@ -116,7 +117,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         numInputParent = this.findViewById(R.id.numInputParent);
         keyInput = this.findViewById(R.id.keyString);
         keyInputParent = this.findViewById(R.id.keyInputParent);
-        setupKeyWatcher();
+        seedInput = this.findViewById(R.id.longNumberInput);
+        seedInputParent = this.findViewById(R.id.longInputParent);
+        setupKeySeedWatcher();
     }
 
     private void setupSchemeSpinner() { // setup the data to fill spinner w/ SCHEMES array
@@ -145,7 +148,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
     }
-    private void setupKeyWatcher() { // Textwatcher for key in parameters to actively update cipher/plaintext
+    private void setupKeySeedWatcher() { // Textwatcher for key in parameters to actively update cipher/plaintext
         keyInput.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
             @Override public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
@@ -154,6 +157,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (sch instanceof Vigenere) {
                     Vigenere vig = (Vigenere) sch;
                     vig.key = editable.toString();
+                    updateText();
+                }
+            }
+        });
+        seedInput.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
+            @Override public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) { }
+            @Override public void afterTextChanged(Editable editable) {
+                EncryptionScheme sch = getScheme();
+                if (sch instanceof NSAES) {
+                    NSAES nsaes = (NSAES) sch;
+                    long newSeed;
+                    try {
+                        newSeed = Long.valueOf(editable.toString());
+                    } catch (NumberFormatException e) {
+                        e.printStackTrace();
+                        newSeed = 0;
+                        Toast.makeText(getApplicationContext(), "Enter a valid seed (0 - " + Long.MAX_VALUE + ")", Toast.LENGTH_SHORT).show();
+                        seedInput.setText(Long.toString(newSeed));
+                    }
+                    nsaes.seed(newSeed);
                     updateText();
                 }
             }
@@ -176,16 +200,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void updateText() { // Update cipher or plain depending upon direction
-        if (direction) {
+        if (direction) { // To prevent event loopback
             String encrypted = getScheme().encrypt(decryptedText.getText().toString());
-//            if (!encryptedText.getText().toString().equals(encrypted)) { // To not trigger looping textchanged events
             encryptedText.setText(encrypted);
-//            }
         } else {
             String decrypted = getScheme().decrypt(encryptedText.getText().toString());
-//            if (!decryptedText.getText().toString().equals(decrypted)) { // To not trigger looping textchanged events
             decryptedText.setText(decrypted);
-//            }
         }
     }
 
@@ -193,24 +213,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         EncryptionScheme newScheme = getScheme();
         Toast.makeText(getApplicationContext(), newScheme.schemeName(), Toast.LENGTH_SHORT).show();
         if (newScheme instanceof Plaintext) {
-            updateParametersLayout(false,1,0,"",false,"");
+            updateParametersLayout();
         } else if (newScheme instanceof Scytale) {
             Scytale scy = (Scytale) newScheme;
             setIntLabel(scy.rows);
-            updateParametersLayout(true,Scytale.UI_MAX_ROWS - 1, scy.rows, "Rows:", false, "");
+            updateParametersLayout(true,Scytale.UI_MAX_ROWS - 1, scy.rows, "Rows:",
+                    false, "");
         } else if (newScheme instanceof Caesar) {
             Caesar cae = (Caesar) newScheme;
             setIntLabel(cae.shift);
-            updateParametersLayout(true, Caesar.UI_MAX_SHIFT, cae.shift, "Shift:",false,"");
+            updateParametersLayout(true, Caesar.UI_MAX_SHIFT, cae.shift, "Shift:",
+                    false,"");
         } else if (newScheme instanceof Vigenere) {
             Vigenere vig = (Vigenere) newScheme;
-            updateParametersLayout(false,1,0, "",true,vig.key);
+            updateParametersLayout(false,1,0, "",
+                    true,vig.key);
+        } else if (newScheme instanceof NSAES) {
+            NSAES nsaes = (NSAES) newScheme;
+            updateParametersLayout(true,NSAES.MAX_BLOCK_SIZE-NSAES.MIN_BLOCK_SIZE,0, "Block Size:", // 2-8 block length
+                    false,"",
+                    true, nsaes.seed());
         }
         updateText();
     }
 
+    private void updateParametersLayout() { // Default to none
+        updateParametersLayout(false,1,0,"",
+                false,"");
+    }
+
     // Update all UI elements with provided arguments, and modify visibility depending on activity
-    private void updateParametersLayout(boolean numEnabled, int numMax, int numVal,String numStr, boolean textEnabled, String txt) {
+    private void updateParametersLayout(boolean numEnabled, int numMax, int numVal, String numStr, boolean textEnabled, String txt) {
+        updateParametersLayout(numEnabled, numMax, numVal, numStr, textEnabled, txt, false, 0);
+    }
+    // Update all UI elements with provided arguments, and modify visibility depending on activity
+    private void updateParametersLayout(boolean numEnabled, int numMax, int numVal, String numStr, boolean textEnabled, String txt, boolean seedEnabled, long seed) {
         numInput.setMax(numMax);
         numInput.setProgress(numVal);
         numInput.setEnabled(numEnabled);
@@ -219,7 +256,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         keyInput.setText(txt);
         keyInput.setEnabled(textEnabled);
         keyInputParent.setVisibility(textEnabled ? View.VISIBLE : View.INVISIBLE);
-        paramLabel.setVisibility(numEnabled||textEnabled ? View.VISIBLE : View.INVISIBLE);
+        paramLabel.setVisibility(numEnabled||textEnabled||seedEnabled ? View.VISIBLE : View.INVISIBLE);
+        seedInput.setText(Long.toString(seed));
+        seedInputParent.setVisibility(seedEnabled ? View.VISIBLE : View.INVISIBLE);
     }
 
     // String to int conversion for setting int value label.
@@ -256,7 +295,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     public void onProgressChanged(SeekBar seekBar, int newValue, boolean fromUser) {
         if (seekBar == numInput) {
-            if (!fromUser) return; // If not user origin, return.
+//            if (!fromUser) return; // If not user origin, return.
             EncryptionScheme sch = getScheme();
             if (sch instanceof Scytale) {
                 Scytale scy = (Scytale) sch;
@@ -266,6 +305,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Caesar cae = (Caesar) sch;
                 cae.shift = newValue;
                 setIntLabel(cae.shift);
+            } else if (sch instanceof NSAES) {
+                NSAES nsaes = (NSAES) sch;
+                nsaes.blockSize(newValue + NSAES.MIN_BLOCK_SIZE);
+                setIntLabel(nsaes.blockSize());
             }
             updateText(); // Update text to reflect change
         }

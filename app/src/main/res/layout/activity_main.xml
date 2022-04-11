@@ -54,7 +54,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:hint="Decrypted"
-            android:text="ThisIsBigProblem" />
+            android:text="SuperLongTextThatShouldBeLongEnough" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <LinearLayout
@@ -92,7 +92,7 @@
     <Spinner
         android:id="@+id/schemeSpinner"
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="75dp"
         android:spinnerMode="dialog" />
 
     <TextView
@@ -140,13 +140,27 @@
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/keyInputParent"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="50dp">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/keyString"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Key"
+            android:singleLine="true" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/longInputParent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/longNumberInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Key Generator Seed"
+            android:inputType="number"
             android:singleLine="true" />
     </com.google.android.material.textfield.TextInputLayout>
 

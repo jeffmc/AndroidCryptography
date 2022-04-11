@@ -23,7 +23,7 @@ public class Scytale extends EncryptionScheme {
         int cols = area/rows; // find col
         int rem = area - arr.length; // remainder
         int pdgbgn = rows - rem;
-        System.out.println(area + ", " + rem + ", " + pdgbgn);
+//        System.out.println(area + ", " + rem + ", " + pdgbgn);
         if (pdgbgn < 0) throw new IllegalArgumentException("ERROR!");
         char[][] grid = new char[cols][rows]; // create grid
         for (char[] a : grid) { Arrays.fill(a, '@'); } // fill with @
